@@ -4,17 +4,20 @@ from rest_framework import status
 from .models import *
 from datetime import datetime
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+
 
 @api_view(['GET'])
 def home(request):
     return Response({"API Version": "1.0.0"})
+
 
 @api_view(['POST'])
 def create_debt(request):
     if request.method == 'POST':
         data = request.data
 
-        required_fields = ['bank', 'value', 'maturity', 'id_responsible']
+        required_fields = ['bank', 'value', 'maturity', 'month' ,'id_responsible']
         for field in required_fields:
             if field not in data:
                 return Response({f'{field} é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
@@ -35,6 +38,7 @@ def create_debt(request):
                 bank=data['bank'],
                 value=value,
                 maturity=maturity,
+                month=data['month'],
                 id_responsible=responsible
             )
 
@@ -47,6 +51,7 @@ def create_debt(request):
             return Response({'error': f'Erro ao criar dívida: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({'error': 'Método não permitido'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
 @api_view(['GET'])
 def get_debts(request):
@@ -61,6 +66,7 @@ def get_debts(request):
                 'bank': debt.bank,
                 'value': debt.value,
                 'maturity': debt.maturity.strftime('%Y-%m-%d'),
+                'month':debt.month,
                 'id_responsible': debt.id_responsible.id,
 
             }
@@ -95,3 +101,12 @@ def create_responsibles(request):
         #         return Response({f'{field} é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
         
 
+@api_view(['DELETE'])
+def delete_debt(request, id):
+    # Obtém a instância da dívida com base no ID fornecido
+    debt = get_object_or_404(Debts, id=id)
+
+    # Deleta a instância da dívida
+    debt.delete()
+
+    return Response({'message': 'Dívida deletada com sucesso'}, status=status.HTTP_204_NO_CONTENT)
