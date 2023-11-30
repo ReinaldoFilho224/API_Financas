@@ -16,7 +16,7 @@ def create_debt(request):
     if request.method == 'POST':
         data = request.data
 
-        required_fields = ['bank', 'value', 'maturity', 'month' ,'id_responsible']
+        required_fields = ['id_bank', 'value', 'maturity', 'month' ,'id_responsible']
         for field in required_fields:
             if field not in data:
                 return Response({f'{field} é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
@@ -32,9 +32,13 @@ def create_debt(request):
             id_responsible = data['id_responsible']
             responsible = Responsible.objects.get(id=id_responsible)
 
+            # Certifica-se de que o Responsible com o ID fornecido exist
+            id_bank = data['id_bank']
+            bank= Bank.objects.get(id=id_bank)
+
             # Cria a instância de Debts associada ao Responsible
             debt = Debts.objects.create(
-                bank=data['bank'],
+                id_bank=bank,
                 value=value,
                 maturity=maturity,
                 month=data['month'],
@@ -62,12 +66,19 @@ def get_debts(request):
         'debts': [
             {
                 'id': debt.id,
-                'bank': debt.bank,
                 'value': debt.value,
                 'maturity': debt.maturity.strftime('%Y-%m-%d'),
                 'month':debt.month,
-                'id_responsible': debt.id_responsible.id,
-
+                'bank': {
+                    'id': debt.id_bank.id,
+                    'nome': debt.id_bank.name,
+                    'cnpj': debt.id_bank.cnpj,
+                    'digital_bank': debt.id_bank.digital_bank,
+                },
+                'responsible' : {
+                    'id': debt.id_responsible.id,
+                    'name': debt.id_responsible.name
+                },
             }
             for debt in debts
         ],
@@ -102,13 +113,15 @@ def create_responsibles(request):
 
 @api_view(['DELETE'])
 def delete_debt(request, id):
-    # Obtém a instância da dívida com base no ID fornecido
-    debt = get_object_or_404(Debts, id=id)
-
-    # Deleta a instância da dívida
-    debt.delete()
-
-    return Response({'message': 'Dívida deletada com sucesso'}, status=status.HTTP_204_NO_CONTENT)
+    if request.method == 'DELETE':
+        try: 
+            debt = Debts.objects.get(id=id)
+            # Deleta a instância da dívida
+            debt.delete()
+            return Response({'message': 'Dívida deletada com sucesso'}, status=status.HTTP_204_NO_CONTENT)
+        except Debts.DoesNotExist:
+            return Response({'message': 'Essa dívida não existe'}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({'message': 'Método não permitido'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 @api_view(['POST'])
 def create_bank(request):
