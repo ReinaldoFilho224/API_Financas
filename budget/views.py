@@ -6,7 +6,6 @@ from datetime import datetime
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
-
 @api_view(['GET'])
 def home(request):
     return Response({"API Version": "1.0.0"})
@@ -82,7 +81,7 @@ def create_responsibles(request):
     if request.method == 'POST':
         data = request.data
 
-        required_fields = [ 'name' ]
+        required_fields = ['name']
         if required_fields[0] not in request.data :
             return Response({f'{required_fields[0]} é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -110,3 +109,46 @@ def delete_debt(request, id):
     debt.delete()
 
     return Response({'message': 'Dívida deletada com sucesso'}, status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['POST'])
+def create_bank(request):
+    if request.method == 'POST':
+        data = request.data
+
+        required_fields = ['name', 'cnpj', 'digital_bank']
+        for field in required_fields:
+            if field not in data:
+                Response({'error': f'Campo {field} é obrigatório!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            bank = Bank.objects.create(
+                name = data['name'],
+                cnpj = data['cnpj'],
+                digital_bank = data['digital_bank']
+            )
+
+            return Response({'message': 'Banco adicionado com sucesso!'}, status=status.HTTP_201_CREATED)
+        except ValueError as error:
+            return Response({'error': f'Erro ao registrar banco: {error}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({'error': 'Método não permitido'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+def get_banks(request):
+    if request.method == 'GET':
+        banks = Bank.objects.all()
+
+        jsonBanks = {
+            'banks': [
+                {
+                    'id': bank.id,
+                    'name': bank.name,
+                    'cnpj': bank.cnpj,
+                    'digital_bank': bank.digital_bank
+                }
+                for bank in banks
+            ]
+        }
+
+        return JsonResponse(jsonBanks)
+    return Response({'error': f'Método {request.method} não permitido'}, status=status.HTTP_400_BAD_REQUEST)

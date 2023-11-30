@@ -16,4 +16,8 @@ class Debts(models.Model):
 class Budget(models.Model):
     value = models.FloatField()
 
-
+class Bank(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=100)
+    cnpj = models.CharField(max_length=18, default='')
+    digital_bank = models.BooleanField()
