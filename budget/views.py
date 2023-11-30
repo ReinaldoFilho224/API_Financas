@@ -6,7 +6,6 @@ from datetime import datetime
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
-
 @api_view(['GET'])
 def home(request):
     return Response({"API Version": "1.0.0"})
@@ -133,3 +132,23 @@ def create_bank(request):
             return Response({'error': f'Erro ao registrar banco: {error}'}, status=status.HTTP_400_BAD_REQUEST)
 
     return Response({'error': 'Método não permitido'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+@api_view(['GET'])
+def get_banks(request):
+    if request.method == 'GET':
+        banks = Bank.objects.all()
+
+        jsonBanks = {
+            'banks': [
+                {
+                    'id': bank.id,
+                    'name': bank.name,
+                    'cnpj': bank.cnpj,
+                    'digital_bank': bank.digital_bank
+                }
+                for bank in banks
+            ]
+        }
+
+        return JsonResponse(jsonBanks)
+    return Response({'error': f'Método {request.method} não permitido'}, status=status.HTTP_400_BAD_REQUEST)

@@ -10,5 +10,6 @@ urlpatterns = [
     path('createResponsible/', create_responsibles, name='create_responsible'),
 
     #Banco
-    path('bank/', create_bank, name='create_bank')
+    path('createBank/', create_bank, name='create_bank'),
+    path('getBanks/', get_banks, name='get_banks')
 ]
