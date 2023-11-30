@@ -7,5 +7,8 @@ urlpatterns = [
     path('delete_debt/<int:id>/', delete_debt, name='delete_debt'),
     
     #Responsaveis
-    path('createResponsible/', create_responsibles, name='create_responsible')
+    path('createResponsible/', create_responsibles, name='create_responsible'),
+
+    #Banco
+    path('bank/', create_bank, name='create_bank')
 ]
