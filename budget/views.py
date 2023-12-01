@@ -5,6 +5,7 @@ from .models import *
 from datetime import datetime
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 
 @api_view(['GET'])
 def home(request):
@@ -165,3 +166,25 @@ def get_banks(request):
 
         return JsonResponse(jsonBanks)
     return Response({'error': f'Método {request.method} não permitido'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def edit_bank(request):
+    bank_id = request.GET.get('id')
+    try:
+        bank = Bank.objects.get(id=bank_id)
+
+        data = request.data
+
+        bank.name = data['name']
+        bank.cnpj = data['cnpj']
+        bank.digital_bank = data['digital_bank']
+
+        bank.save()
+
+        result = {'result': f'Banco {bank.name} editado com sucesso!'}
+
+        return Response(result)
+    except Bank.DoesNotExist:
+        return Response({'result': f'Banco com id {bank_id} não existe!'}, status=status.HTTP_404_NOT_FOUND)
+    except:
+        return Response({'result': 'Um ou mais paramêtros não foram encontrados na requisição!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
