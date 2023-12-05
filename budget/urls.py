@@ -17,5 +17,6 @@ urlpatterns = [
     #Banco
     path('createBank/', create_bank, name='create_bank'),
     path('getBanks/', get_banks, name='get_banks'),
-    path('editBank/', edit_bank, name='edit_bank')
+    path('editBank/', edit_bank, name='edit_bank'),
+    path('delBank/', del_bank, name='del_bank')
 ]

@@ -19,55 +19,51 @@ def home(request):
 
 @api_view(['POST'])
 def create_debt(request):
-    if request.method == 'POST':
-        data = request.data
+    data = request.data
 
-        required_fields = ['id_bank', 'value', 'maturity', 'month' ,'id_responsible']
-        for field in required_fields:
-            if field not in data:
-                return Response({f'{field} é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+    required_fields = ['id_bank', 'value', 'maturity', 'month' ,'id_responsible']
 
-        try:
-            # Transforma o valor em um número
-            value = float(data['value'])
+    for field in required_fields:
+        if field not in data:
+            return Response({f'{field} é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Transforma a data de vencimento no formato correto
-            maturity = datetime.strptime(data['maturity'], '%Y-%m-%d').date()
+    try:
+        # Transforma o valor em um número
+        value = float(data['value'])
 
-            # Certifica-se de que o Responsible com o ID fornecido existe
-            id_responsible = data['id_responsible']
-            responsible = Responsible.objects.get(id=id_responsible)
+        # Transforma a data de vencimento no formato correto
+        maturity = datetime.strptime(data['maturity'], '%Y-%m-%d').date()
 
-            # Certifica-se de que o Responsible com o ID fornecido exist
-            id_bank = data['id_bank']
-            bank= Bank.objects.get(id=id_bank)
+        id_responsible = data['id_responsible']
+        responsible = Responsible.objects.get(id=id_responsible)
 
-            # Cria a instância de Debts associada ao Responsible
-            debt = Debts.objects.create(
-                id_bank=bank,
-                value=value,
-                maturity=maturity,
-                month=data['month'],
-                id_responsible=responsible
-            )
+        id_bank = data['id_bank']
+        bank= Bank.objects.get(id=id_bank)
 
-            return Response({'message': 'Dívida criada com sucesso'}, status=status.HTTP_201_CREATED)
-
-        except Responsible.DoesNotExist:
-            return Response({'error': 'Responsável não encontrado'}, status=status.HTTP_400_BAD_REQUEST)
-
-        except ValueError as e:
-            return Response({'error': f'Erro ao criar dívida: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
-
-    return Response({'error': 'Método não permitido'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        # Cria a instância de Debts associada ao Responsible
+        debt = Debts.objects.create(
+            id_bank=bank,
+            value=value,
+            maturity=maturity,
+            month=data['month'],
+            id_responsible=responsible
+        )
+        return Response({'message': 'Dívida criada com sucesso'}, status=status.HTTP_201_CREATED)
+    
+    except Responsible.DoesNotExist:
+        return Response({'error': f'Responsável com id {id_responsible} não encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    
+    except Bank.DoesNotExist:
+        return Response({'error': f'Banco com id {id_bank} não encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    
+    except ValueError as e:
+        return Response({'error': f'Erro ao criar dívida: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
 def get_debts(request):
-    # Consulta o banco de dados para obter todas as dívidas
     debts = Debts.objects.all()
 
-    # Retorna os dados diretamente como JSON
     data = {
         'debts': [
             {
@@ -102,10 +98,14 @@ def edit_debt(request):
         debt = Debts.objects.get(id=debt_id)
         data = request.data
 
-        debt.id_bank_id = data.get('id_bank', debt.id_bank_id)
+        if 'id_bank' in data:
+            bank = Bank.objects.get(id=data['id_bank'])
+            debt.id_bank_id = data['id_bank']
         debt.value = data.get('value', debt.value)
         debt.maturity = data.get('maturity', debt.maturity)
-        debt.id_responsible_id = data.get('id_responsible', debt.id_responsible_id)
+        if 'id_responsible' in data:
+            responsible = Responsible.objects.get(id=data['id_responsible'])
+            debt.id_responsible_id = data['id_responsible']
         debt.month = data.get('month', debt.month)
 
         debt.save()
@@ -119,7 +119,7 @@ def edit_debt(request):
     except Responsible.DoesNotExist:
         return Response({'result': 'Responsável com o ID fornecido não existe!'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response({'result': f'Erro na requisição: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'result': f'Erro na requisição: {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
 
 
 
@@ -217,8 +217,8 @@ def delete_responsibles(request):
 
         responsible.delete()
 
-        return Response({'message': 'Dívida deletada com sucesso'}, status=status.HTTP_204_NO_CONTENT)
-    except Debts.DoesNotExist:
+        return Response({'message': 'Responsável deletado com sucesso'}, status=status.HTTP_204_NO_CONTENT)
+    except Responsible.DoesNotExist:
         return Response({'message': 'Essa dívida não existe'}, status=status.HTTP_400_BAD_REQUEST)
 
 """
@@ -291,3 +291,18 @@ def edit_bank(request):
         return Response({'result': f'Banco com id {bank_id} não existe!'}, status=status.HTTP_404_NOT_FOUND)
     except:
         return Response({'result': 'Um ou mais paramêtros não foram encontrados na requisição!'}, status=status.HTTP_406_NOT_ACCEPTABLE)
+    
+@api_view(['DELETE'])
+def del_bank(request):
+    bank_id = request.GET.get('id')
+
+    if bank_id is None:
+        return Response({'message': 'O parâmetro "id" não foi fornecido'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        bank = Bank.objects.get(id=bank_id)
+        bank.delete()
+
+        return Response({'message': f'Banco {bank_id} deletado com sucesso!'}, status=status.HTTP_200_OK)
+    except ValueError as error: 
+        return Response({'error': f'Erro ao deletar banco: {str(error)}'}, status=status.HTTP_400_BAD_REQUEST)
