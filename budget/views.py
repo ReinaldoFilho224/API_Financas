@@ -62,6 +62,31 @@ def create_debt(request):
 
 @api_view(['GET'])
 def get_debts(request):
+    debt_id = request.GET.get('id')
+
+    try:
+        if debt_id is not None:
+            debt = Debts.objects.get(id=debt_id)
+            data = {
+                'id': debt.id,
+                'value': debt.value,
+                'maturity': debt.maturity.strftime('%Y-%m-%d'),
+                'month': debt.month,
+                'bank': {
+                    'id': debt.id_bank.id,
+                    'nome': debt.id_bank.name,
+                    'cnpj': debt.id_bank.cnpj,
+                    'digital_bank': debt.id_bank.digital_bank,
+                },
+                'responsible' : {
+                    'id': debt.id_responsible.id,
+                    'name': debt.id_responsible.name
+                }
+            }
+            return JsonResponse(data)
+    except Debts.DoesNotExist:
+        return Response({'error': f'Débito com id {debt_id} não encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
     debts = Debts.objects.all()
 
     data = {
