@@ -62,10 +62,8 @@ def create_debt(request):
 
 @api_view(['GET'])
 def get_debts(request):
-    # Consulta o banco de dados para obter todas as dívidas
     debts = Debts.objects.all()
 
-    # Retorna os dados diretamente como JSON
     data = {
         'debts': [
             {
@@ -100,10 +98,14 @@ def edit_debt(request):
         debt = Debts.objects.get(id=debt_id)
         data = request.data
 
-        debt.id_bank_id = data.get('id_bank', debt.id_bank_id)
+        if 'id_bank' in data:
+            bank = Bank.objects.get(id=data['id_bank'])
+            debt.id_bank_id = data['id_bank']
         debt.value = data.get('value', debt.value)
         debt.maturity = data.get('maturity', debt.maturity)
-        debt.id_responsible_id = data.get('id_responsible', debt.id_responsible_id)
+        if 'id_responsible' in data:
+            responsible = Responsible.objects.get(id=data['id_responsible'])
+            debt.id_responsible_id = data['id_responsible']
         debt.month = data.get('month', debt.month)
 
         debt.save()
@@ -117,7 +119,7 @@ def edit_debt(request):
     except Responsible.DoesNotExist:
         return Response({'result': 'Responsável com o ID fornecido não existe!'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        return Response({'result': f'Erro na requisição: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'result': f'Erro na requisição: {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
 
 
 
