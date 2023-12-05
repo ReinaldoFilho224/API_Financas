@@ -178,19 +178,26 @@ def create_responsibles(request):
             responsible = Responsible.objects.create(
                 name=data['name']
             )
-
             return Response({'message': 'Responsavel criado com sucesso'}, status=status.HTTP_201_CREATED)
 
-        except ValueError as e:
-                # Se ocorrer um erro ao criar a dívida, envia uma resposta de erro
-                return Response({'error': f'Erro ao criar dívida: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # for field in required_fields:
-        #     if field not in data:
-        #         return Response({f'{field} é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as error:
+            return Response({'error': f'Erro ao criar dívida: {str(error)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def get_responsibles(request):
+    responsible_id = request.GET.get('id')
+
+    try:
+        if responsible_id is not None:
+            responsible = Responsible.objects.get(id=responsible_id)
+            data = {
+                'id': responsible.id,
+                'name': responsible.name
+            }
+            return JsonResponse(data)
+    except Responsible.DoesNotExist:
+        return Response({'error': f'Responsável com id {responsible_id} não encontrado'}, status=status.HTTP_404_NOT_FOUND)
+
     responsibles = Responsible.objects.all()
 
     data = [
@@ -205,7 +212,6 @@ def get_responsibles(request):
 
 @api_view(['PUT'])
 def edit_responsibles(request):
-
     responsible_id = request.GET.get('id')
 
     try:
