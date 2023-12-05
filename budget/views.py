@@ -48,7 +48,7 @@ def create_debt(request):
             month=data['month'],
             id_responsible=responsible
         )
-        return Response({'message': 'Dívida criada com sucesso'}, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Débito criado com sucesso'}, status=status.HTTP_201_CREATED)
     
     except Responsible.DoesNotExist:
         return Response({'error': f'Responsável com id {id_responsible} não encontrado'}, status=status.HTTP_404_NOT_FOUND)
@@ -56,8 +56,8 @@ def create_debt(request):
     except Bank.DoesNotExist:
         return Response({'error': f'Banco com id {id_bank} não encontrado'}, status=status.HTTP_404_NOT_FOUND)
     
-    except ValueError as e:
-        return Response({'error': f'Erro ao criar dívida: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+    except ValueError as error:
+        return Response({'error': f'Erro ao criar débito: {str(error)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
@@ -143,10 +143,8 @@ def edit_debt(request):
         return Response({'result': 'Banco com o ID fornecido não existe!'}, status=status.HTTP_404_NOT_FOUND)
     except Responsible.DoesNotExist:
         return Response({'result': 'Responsável com o ID fornecido não existe!'}, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return Response({'result': f'Erro na requisição: {str(e)}'}, status=status.HTTP_404_NOT_FOUND)
-
-
+    except Exception as error:
+        return Response({'result': f'Erro na requisição: {str(error)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
 def delete_debt(request):
@@ -155,15 +153,12 @@ def delete_debt(request):
     if debt_id is None:
        return Response({'message': 'O parâmetro "id" não foi fornecido '}, status=status.HTTP_400_BAD_REQUEST)
 
-    if request.method == 'DELETE':
-        try: 
-            debt = Debts.objects.get(id=debt_id)
-            # Deleta a instância da dívida
-            debt.delete()
-            return Response({'message': 'Dívida deletada com sucesso'}, status=status.HTTP_204_NO_CONTENT)
-        except Debts.DoesNotExist:
-            return Response({'message': 'Essa dívida não existe'}, status=status.HTTP_400_BAD_REQUEST)
-    return Response({'message': 'Método não permitido'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    try: 
+        debt = Debts.objects.get(id=debt_id)
+        debt.delete()
+        return Response({'message': 'Débito deletado com sucesso'}, status=status.HTTP_200_OK)
+    except Debts.DoesNotExist:
+        return Response({'message': f'Débito com id {debt_id} naõ encontrado'}, status=status.HTTP_404_NOT_FOUND)
 
 """
 =====================
