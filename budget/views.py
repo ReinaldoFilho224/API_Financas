@@ -258,7 +258,7 @@ def create_bank(request):
     if request.method == 'POST':
         data = request.data
 
-        required_fields = ['name', 'cnpj', 'digital_bank']
+        required_fields = ['name', 'digital_bank']
         for field in required_fields:
             if field not in data:
                 Response({'error': f'Campo {field} é obrigatório!'}, status=status.HTTP_400_BAD_REQUEST)
@@ -266,7 +266,6 @@ def create_bank(request):
         try:
             bank = Bank.objects.create(
                 name = data['name'],
-                cnpj = data['cnpj'],
                 digital_bank = data['digital_bank']
             )
 
